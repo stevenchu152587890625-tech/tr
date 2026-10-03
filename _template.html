@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>中壢 → 新竹 → 台中 來回行程規劃器</title>
+<style>
+:root{
+  --bg:#07090d; --panel:#101319; --panel2:#161b23; --line:#232a35;
+  --tx:#e8edf5; --dim:#8b97a8; --acc:#d6ff00; --cy:#35e0ff; --rd:#ff4d6d; --gn:#5ee89b;
+  --mono:'Share Tech Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:"Noto Sans TC",system-ui,-apple-system,"Microsoft JhengHei",sans-serif;line-height:1.6;padding:24px 16px 80px}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1200px 600px at 12% -10%,rgba(214,255,0,.10),transparent 60%),
+             radial-gradient(900px 500px at 100% 0%,rgba(53,224,255,.10),transparent 55%);}
+.wrap{max-width:1180px;margin:0 auto;position:relative;z-index:1}
+h1{font-size:clamp(20px,3vw,30px);letter-spacing:.02em}
+h1 span{color:var(--acc)}
+.sub{color:var(--dim);font-size:13px;margin-top:4px;font-family:var(--mono)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+.panel h2{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--cy);font-family:var(--mono);font-weight:400;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:11px;letter-spacing:.1em;color:var(--dim);font-family:var(--mono);text-transform:uppercase}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--panel2)}
+.seg button{background:none;border:0;color:var(--dim);padding:9px 16px;cursor:pointer;font-size:14px;font-family:var(--mono);transition:.15s}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{color:var(--tx);background:#1c222c}
+.seg button.on{background:var(--acc);color:#07090d;font-weight:700}
+input[type=time]{background:var(--panel2);border:1px solid var(--line);color:var(--tx);padding:8px 10px;border-radius:9px;font-family:var(--mono);font-size:15px}
+input[type=range]{accent-color:var(--acc);width:190px}
+.val{font-family:var(--mono);color:var(--acc);font-size:15px;min-width:74px;display:inline-block}
+.tog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);cursor:pointer}
+.tog input{accent-color:var(--cy);width:16px;height:16px}
+
+/* timeline */
+.tl{margin-top:6px}
+.step{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:14px 0;border-top:1px dashed var(--line)}
+.step:first-child{border-top:0}
+.tm{font-family:var(--mono);font-size:17px;color:var(--acc)}
+.tm small{display:block;color:var(--dim);font-size:11px}
+.card{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cy);border-radius:10px;padding:11px 13px}
+.card.leg{border-left-color:var(--acc)}
+.card.wait{border-left-color:#3a4352;background:#0d1117}
+.tt{font-weight:600;font-size:15px}
+.meta{color:var(--dim);font-size:12.5px;font-family:var(--mono);margin-top:3px}
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:5px;margin-left:7px;vertical-align:1px}
+.b-ok{background:rgba(94,232,155,.14);color:var(--gn);border:1px solid rgba(94,232,155,.35)}
+.b-no{background:rgba(255,77,109,.13);color:var(--rd);border:1px solid rgba(255,77,109,.35)}
+.b-pt{background:rgba(214,255,0,.13);color:var(--acc);border:1px solid rgba(214,255,0,.35)}
+.b-plat{background:rgba(53,224,255,.13);color:var(--cy);border:1px solid rgba(53,224,255,.4)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--dim);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);font-weight:400}
+td.m{font-family:var(--mono)}
+tr.off td{opacity:.34}
+tr.hl td{background:rgba(214,255,0,.06)}
+.pick{background:var(--panel2);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:5px 8px;font-family:var(--mono);font-size:12.5px;max-width:290px}
+.sum{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 15px;min-width:132px}
+.kpi .k{font-size:11px;color:var(--dim);font-family:var(--mono);letter-spacing:.1em}
+.kpi .v{font-size:19px;font-family:var(--mono);color:var(--acc)}
+.note{font-size:12.5px;color:var(--dim);margin-top:10px;padding-left:14px;border-left:2px solid var(--line)}
+.note b{color:var(--tx);font-weight:600}
+a{color:var(--cy)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:7px 13px;cursor:pointer;font-size:13px}
+.tabs button.on{background:var(--cy);color:#07090d;border-color:var(--cy);font-weight:700}
+@media(max-width:640px){.step{grid-template-columns:1fr}.tbl{overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>中壢 → 新竹 → 台中 <span>來回行程規劃器</span></h1>
+  <div class="sub">TRA TIMETABLE / 新竹愛心卡本人使用 · 資料擷取日 2026-10-03</div>
+
+  <div class="panel">
+    <h2>① 出發設定</h2>
+    <div class="row">
+      <div class="fld">
+        <label>中壢站出發</label>
+        <div class="seg" id="depSeg">
+          <button data-t="09:00">09:00</button>
+          <button data-t="10:00">10:00</button>
+          <button data-t="11:00">11:00</button>
+        </div>
+      </div>
+      <div class="fld">
+        <label>自訂出發</label>
+        <input type="time" id="depCustom" value="09:00">
+      </div>
+      <div class="fld">
+        <label>新竹轉乘緩衝</label>
+        <select class="pick" id="buf">
+          <option value="8">8 分（同月台快跑）</option>
+          <option value="15" selected>15 分（穩妥）</option>
+          <option value="25">25 分（買便當上廁所）</option>
+          <option value="40">40 分（順便逛站前）</option>
+        </select>
+      </div>
+    </div>
+
+    <h2 style="margin-top:20px">② 台中交易時間</h2>
+    <div class="row">
+      <div class="fld">
+        <label>賣東西 / 交易時間</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <input type="range" id="tx" min="45" max="210" step="15" value="120">
+          <span class="val" id="txVal">2 小時 0 分</span>
+        </div>
+      </div>
+      <div class="fld">
+        <label>順便吃東西</label>
+        <div class="seg" id="eatSeg">
+          <button data-t="0" class="on">不吃</button>
+          <button data-t="30">+30分</button>
+          <button data-t="45">+45分</button>
+          <button data-t="60">+60分</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:20px">③ 愛心卡設定</h2>
+    <div class="row">
+      <label class="tog"><input type="checkbox" id="fastPick" checked>
+        挑車策略：45 分內優先挑「最快抵達」的班次（不打勾＝照順序搭下一班）</label>
+      <label class="tog"><input type="checkbox" id="ptsLoose">
+        放寬認定：只要「一端是新竹車站」就能用新竹市點數</label>
+      <label class="tog"><input type="checkbox" id="showAll" checked>
+        時刻表列出全部班次（含不能刷卡的對號列車）</label>
+    </div>
+    <div class="note" id="cardNote"></div>
+  </div>
+
+  <div class="panel">
+    <h2>④ 行程時間軸</h2>
+    <div class="sum" id="kpis"></div>
+    <div class="tl" id="timeline"></div>
+  </div>
+
+  <div class="panel">
+    <h2>⑤ 交易時間動態分析</h2>
+    <div class="tbl"><table id="sens"></table></div>
+    <div class="note">這張表固定「中壢出發時間」，把交易時間從 45 分一路加到 210 分，
+    看每一個時間點會接到哪一班回程車、幾點回到家。紅字代表那天已無車可搭。</div>
+  </div>
+
+  <div class="panel">
+    <h2>⑥ 各段完整時刻表</h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="tbl"><div id="legTable"></div></div>
+    <div class="note">灰階＝持電子票證不得搭乘（觀光列車、團體列車、普悠瑪、太魯閣、自強3000型）。
+    愛心票價為全票半價四捨五入；持電子票證搭自強號另有計費規則，實際扣款可能略低。</div>
+  </div>
+
+  <div class="panel">
+    <h2>⑦ 卡片規則摘要</h2>
+    <div class="note">
+      <b>可刷卡車種</b>：區間、區間快、莒光、推拉式（PP）自強號。對號列車不另行劃座。<br>
+      <b>不得刷卡</b>：觀光列車、團體列車、太魯閣、普悠瑪、自強（3000）型、專開列車、商務／親子車廂。<br>
+      <b>愛心卡（優待卡）</b>：半價計收，限本人使用，須配合查驗證件。<br>
+      <b>乘車時限</b>：進出站距離未逾 70 公里者不得逾 3 小時；逾 70 公里未逾 200 公里者不得逾 8 小時。<br>
+      <b>新竹市敬老卡／愛心卡點數</b>：每月 1,200 點（1 點＝1 元，月底歸零），
+      台鐵單趟補助上限 600 點，限「於新竹市或新竹縣任一火車站搭乘」。<br>
+      <span style="color:var(--rd)">※ 點數是否認列「中壢端進站、新竹端出站」或「台中端進站、新竹端出站」，
+      各站驗票機認定不同，請以新竹市社會處（03-5352386 分機 502）及車站公告為準，
+      上方 ③ 的開關可切換兩種認定方式試算。</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>⑧ 月臺配置與來源</h2>
+    <div class="note">
+      <b>月臺是推定值，不是即時資訊。</b>台鐵沒有公開「車次 → 月臺」的固定對應，實際月臺由當日站方調度，
+      以車站 LED 顯示器與廣播為準。下表是依各站站場配置推定的慣用月臺，用來讓你事先知道「往哪個月臺走」。<br><br>
+      <b>中壢車站</b>（臨時站，2024/6/16 啟用）：側式第 1 月臺＝南下逆行，往湖口、新竹、竹南 → <span style="color:var(--cy)">南下搭第 1 月臺</span>。
+      第 2 月臺（2A/2B）為北上順行與待避用。注意本站因桃園鐵路地下化施工，月臺仍可能再調整。<br>
+      <b>新竹車站</b>：第 1 月臺＝順行北上（往竹北、新豐、湖口、台北）→ <span style="color:var(--cy)">北返搭第 1 月臺</span>；
+      2A 月臺＝逆行南下，往竹南、苗栗、台中 → <span style="color:var(--cy)">南下台中搭 2A</span>；
+      3A 月臺供海線（後龍、台中港、沙鹿）班次使用。<br>
+      <b>台中車站</b>（高架）：1A/1B 月臺＝南下（彰化、台南、高雄）；2A/2B 月臺＝北上（苗栗、新竹、台北）
+      → <span style="color:var(--cy)">回程北上搭 2A 或 2B</span>；3 月臺為指定班次使用。
+      <br><br>
+      <span style="color:var(--rd)">※ 已查證 TDX（運輸資料流通服務）的免費端點 <code>Rail/TRA/LiveBoard</code>
+      只提供車次、方向、表定時刻與誤點分秒，<b>沒有月臺欄位</b>；舊版 <code>StationLiveBoard</code> 已下架（404），
+      進階端點需金鑰。因此本頁無法自動更新即時月臺。</span>
+    </div>
+    <div class="note" style="margin-top:12px">
+      月臺配置來源：<a href="https://zh.wikipedia.org/zh-tw/%E4%B8%AD%E5%A3%A2%E8%BB%8A%E7%AB%99" target="_blank">中壢車站</a> ·
+      <a href="https://zh.wikipedia.org/zh-tw/%E6%96%B0%E7%AB%B9%E8%BB%8A%E7%AB%99" target="_blank">新竹車站</a> ·
+      <a href="https://zh.wikipedia.org/zh-tw/%E8%87%BA%E4%B8%AD%E8%BB%8A%E7%AB%99" target="_blank">臺中車站</a>（月臺配置段落）<br>
+      時刻資料：<a href="https://timetables.tw/routes/1100/1210" target="_blank">中壢→新竹</a> ·
+      <a href="https://timetables.tw/routes/1210/3300" target="_blank">新竹→台中</a>（含反向）<br>
+      規定來源：<a href="https://www.railway.gov.tw/tra-tip-web/tip/tip00C/tipC21/view?subCode=8ae4cac290f06c930190f390e6930537" target="_blank">台鐵多卡通電子票證乘車營運規定</a> ·
+      <a href="https://society.hccg.gov.tw/ch/hotkey_print.jsp?mtitle=%E4%BA%A4%E9%80%9A%E7%A6%8F%E5%88%A9&contentlink=ap/onemessages_view.jsp&dataserno=202308040003&mserno=201603090032&id=129&contentid=129" target="_blank">新竹市社會處 交通福利</a> ·
+      <a href="https://society.hccg.gov.tw/ch/home.jsp?dataserno=202507200007&id=13&mcustomize=municipalnews_view.jsp&mserno=201601300106&parentpath=0,2&t=MunicipalNews&toolsflag=Y" target="_blank">8/1 起台鐵點數放寬公告</a>
+    </div>
+  </div>
+</div>
+
+<script>
+/*__DATA__*/
+
+/* ---------- helpers ---------- */
+const M = s => { const [h,m]=s.split(':').map(Number); return h*60+m; };
+const S = t => { t=((t%1440)+1440)%1440; return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); };
+const DUR = m => m>=60 ? `${Math.floor(m/60)} 小時 ${m%60} 分` : `${m} 分`;
+const BLOCK = /普悠瑪|太魯閣|自強3000|3000型|觀光|團體|專開|商務|親子/;
+const cardOK = r => !BLOCK.test(r.t);
+const HALF = p => Math.round(p/2);
+
+/* 段設定：點數認定起點是否在新竹 */
+const LEGS = [
+  {key:'zhongli_hsinchu', from:'中壢', to:'新竹', pts:false},
+  {key:'hsinchu_taichung',from:'新竹', to:'台中', pts:true},
+  {key:'taichung_hsinchu',from:'台中', to:'新竹', pts:false},
+  {key:'hsinchu_zhongli', from:'新竹', to:'中壢', pts:true},
+];
+const ptsOn = (leg, loose) => loose ? true : leg.pts;
+
+/* 慣用月臺（依各站站場配置推定，非即時；實際以車站 LED 與廣播為準）
+   中壢（臨時站，2024/6/16 啟用）：第1月臺＝側式，南下逆行往湖口/新竹/竹南
+   新竹：第1月臺＝順行北上；2A＝逆行南下（往竹南/苗栗/台中）
+   台中（高架）：1A/1B＝南下；2A/2B＝北上（往苗栗/新竹/台北） */
+function plat(legKey, r){
+  switch(legKey){
+    case 'zhongli_hsinchu': return '第 1 月臺';
+    case 'hsinchu_taichung': return /^3\d{3}$/.test(r.n) ? '3A 月臺' : '2A 月臺';
+    case 'taichung_hsinchu': return '2A／2B 月臺';
+    case 'hsinchu_zhongli': return '第 1 月臺';
+  }
+  return '—';
+}
+
+/* 挑車：fast = 45 分內挑最快抵達的班次，否則照順序搭下一班 */
+function pick(legKey, t, fast){
+  const cand = (TT[legKey]||[]).filter(cardOK);
+  const next = cand.find(r => M(r.d) >= t);
+  if(!next) return null;
+  if(!fast) return next;
+  const win = cand.filter(r => M(r.d) >= t && M(r.d) <= t + 45);
+  return win.reduce((b,r) => M(r.a) < M(b.a) ? r : b, next);
+}
+
+/* ---------- state ---------- */
+const st = { dep:'09:00', tx:120, eat:0, buf:15, loose:false, showAll:true, fast:true, tab:'zhongli_hsinchu' };
+
+/* ---------- 核心計算 ---------- */
+function plan(depTime, txMin, buf, loose, fast){
+  const dep = M(depTime);
+  const l1 = pick('zhongli_hsinchu', dep, fast);
+  if(!l1) return {fail:'中壢端當日已無可刷卡班次'};
+  const arrHs = M(l1.a);
+  const l2 = pick('hsinchu_taichung', arrHs + buf, fast);
+  if(!l2) return {fail:'新竹端接不上往台中的可刷卡班次'};
+  const arrTc = M(l2.a);
+  const leaveTc = arrTc + txMin + st.eat;
+  const l3 = pick('taichung_hsinchu', leaveTc, fast);
+  if(!l3) return {fail:`台中 ${S(leaveTc)} 之後已無可刷卡班次回新竹（當日無法返回）`};
+  const arrHs2 = M(l3.a);
+  const l4 = pick('hsinchu_zhongli', arrHs2 + buf, fast);
+  if(!l4) return {fail:`新竹 ${S(arrHs2)} 之後已無可刷卡班次回中壢`};
+  const arrZl = M(l4.a);
+
+  const legs = [
+    {leg:LEGS[0], r:l1, dep:M(l1.d), arr:M(l1.a)},
+    {leg:LEGS[1], r:l2, dep:M(l2.d), arr:M(l2.a)},
+    {leg:LEGS[2], r:l3, dep:M(l3.d), arr:M(l3.a)},
+    {leg:LEGS[3], r:l4, dep:M(l4.d), arr:M(l4.a)},
+  ];
+  return {
+    dep, l1,l2,l3,l4, arrTc, leaveTc, arrZl, legs,
+    waitTc: M(l3.d) - arrTc,
+    total: (arrZl < dep ? arrZl + 1440 : arrZl) - dep,
+  };
+}
+
+function money(leg, r, loose){
+  const full = r.p;
+  const half = HALF(full);
+  const usePts = ptsOn(leg, loose);
+  const pts = usePts ? Math.min(half, 600) : 0;
+  return {full, half, pts, cash: half - pts};
+}
+
+/* ---------- render ---------- */
+const $ = s => document.querySelector(s);
+
+function renderKPIs(p){
+  const legs = p.legs;
+  const totalPts = legs.reduce((s,x)=> s + money(x.leg,x.r,st.loose).pts, 0);
+  const totalCash = legs.reduce((s,x)=> s + money(x.leg,x.r,st.loose).cash, 0);
+  const totalFull = legs.reduce((s,x)=> s + x.r.p, 0);
+  $('#kpis').innerHTML = `
+    <div class="kpi"><div class="k">抵達台中</div><div class="v">${S(p.arrTc)}</div></div>
+    <div class="kpi"><div class="k">台中停留</div><div class="v">${DUR(p.waitTc)}</div></div>
+    <div class="kpi"><div class="k">回到中壢</div><div class="v">${S(p.arrZl)}</div></div>
+    <div class="kpi"><div class="k">在外總時長</div><div class="v">${DUR(p.total)}</div></div>
+    <div class="kpi"><div class="k">點數折抵</div><div class="v">${totalPts} 點</div></div>
+    <div class="kpi"><div class="k">自付現金</div><div class="v">$${totalCash}</div></div>
+    <div class="kpi"><div class="k">全票原價</div><div class="v" style="color:var(--dim)">$${totalFull}</div></div>`;
+}
+
+function renderTimeline(p){
+  const rows = [];
+  const legCard = x => {
+    const m = money(x.leg, x.r, st.loose);
+    const pf = plat(x.leg.key, x.r);
+    return stepCard(x.dep, `搭 ${x.r.t} ${x.r.n} 次　${x.leg.from} → ${x.leg.to}`,
+      `<span class="badge b-plat">${pf}</span>&nbsp; ` +
+      `${S(x.dep)} → ${S(x.arr)} · 車程 ${DUR(x.arr-x.dep)} · 全票 $${m.full}｜愛心票 $${m.half}` +
+      (m.pts?`　<span class="badge b-pt">點數折抵 ${m.pts} 點</span>`:'') +
+      (m.pts?`　<span class="badge b-ok">自付 $${m.cash}</span>`:`　<span class="badge b-no">自付 $${m.cash}</span>`),
+      'leg', x.arr);
+  };
+  const waitCard = (t,title,meta) => stepCard(t, title, meta, 'wait');
+
+  rows.push(waitCard(p.dep, '中壢車站刷卡進站',
+    `持新竹愛心卡（愛心票半價）· 限本人使用 · 備妥身心障礙證明供查驗　<span class="badge b-plat">往 ${plat('zhongli_hsinchu', p.l1)}</span>`));
+  rows.push(legCard(p.legs[0]));
+  rows.push(waitCard(M(p.l2.d) - 6, '轉乘新竹站',
+    `緩衝 ${DUR(M(p.l2.d) - p.legs[0].arr)} · 同站換月臺即可，不必出站　<span class="badge b-plat">往 ${plat('hsinchu_taichung', p.l2)}</span>`));
+  rows.push(legCard(p.legs[1]));
+  rows.push(waitCard(p.legs[1].arr, '台中站出站 — 開始交易',
+    `此時為 ${S(p.legs[1].arr)}，實際可用 ${DUR(p.waitTc)}（設定 ${DUR(st.tx + st.eat)}，對齊班次後 ${DUR(p.waitTc)}）`));
+  rows.push(legCard(p.legs[2]));
+  rows.push(waitCard(M(p.l4.d) - 6, '轉乘新竹站',
+    `緩衝 ${DUR(M(p.l4.d) - p.legs[2].arr)}　<span class="badge b-plat">往 ${plat('hsinchu_zhongli', p.l4)}</span>`));
+  rows.push(legCard(p.legs[3]));
+  rows.push(waitCard(p.arrZl, '中壢站出站 — 到家',
+    `全程 ${DUR(p.total)}（${S(p.dep)} → ${S(p.arrZl)}）`));
+  $('#timeline').innerHTML = rows.join('');
+}
+function stepCard(t, title, meta, cls, arr){
+  return `<div class="step">
+    <div class="tm">${S(t)}${arr!==undefined?`<small>→ ${S(arr)}</small>`:''}</div>
+    <div class="card ${cls}"><div class="tt">${title}</div><div class="meta">${meta}</div></div>
+  </div>`;
+}
+
+/* 交易時間敏感度分析 */
+function renderSens(){
+  const dep = M(st.dep);
+  const steps = [45,60,75,90,105,120,135,150,165,180,195,210];
+  let html = `<thead><tr><th>交易時間</th><th>台中離開</th><th>回程班次</th><th>到新竹</th><th>轉乘</th><th>到中壢</th><th>在外總計</th></tr></thead><tbody>`;
+  steps.forEach(t=>{
+    const p = plan(st.dep, t, st.buf, st.loose, st.fast);
+    const cur = t === st.tx;
+    if(p.fail){
+      html += `<tr class="${cur?'hl':''}"><td class="m">${DUR(t)}</td><td colspan="6" style="color:var(--rd)">${p.fail}</td></tr>`;
+      return;
+    }
+    html += `<tr class="${cur?'hl':''}">
+      <td class="m">${DUR(t)}${t===st.tx?' ◀':''}</td>
+      <td class="m">${S(p.leaveTc)}</td>
+      <td class="m">${p.l3.t} ${p.l3.n} 次</td>
+      <td class="m">${p.l3.a}</td>
+      <td class="m">${p.l4.t} ${p.l4.n} 次</td>
+      <td class="m">${S(p.arrZl)}</td>
+      <td class="m">${DUR(p.total)}</td></tr>`;
+  });
+  $('#sens').innerHTML = html + '</tbody>';
+}
+
+/* 完整時刻表 */
+function renderTable(){
+  const leg = LEGS.find(l=>l.key===st.tab);
+  const rows = (TT[st.tab]||[]);
+  let html = `<table><thead><tr><th>車種</th><th>車次</th><th>${leg.from} 開</th><th>月臺</th><th>${leg.to} 到</th><th>車程</th><th>全票</th><th>愛心票</th><th>刷卡</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const ok = cardOK(r);
+    if(!ok && !st.showAll) return;
+    const m = money(leg, r, st.loose);
+    html += `<tr class="${ok?'':'off'}">
+      <td>${r.t}</td><td class="m">${r.n}</td>
+      <td class="m">${r.d}</td>
+      <td class="m" style="color:${ok?'var(--cy)':'var(--dim)'}">${plat(leg.key, r)}</td>
+      <td class="m">${r.a}</td>
+      <td class="m">${DUR(M(r.a)-M(r.d))}</td>
+      <td class="m">$${m.full}</td><td class="m">$${m.half}</td>
+      <td>${ok?'<span class="badge b-ok">可</span>':'<span class="badge b-no">不可</span>'}</td></tr>`;
+  });
+  $('#legTable').innerHTML = html + '</tbody></table>';
+}
+
+/* ---------- 主更新 ---------- */
+function update(){
+  $('#txVal').textContent = DUR(st.tx);
+  const p = plan(st.dep, st.tx, st.buf, st.loose, st.fast);
+  if(p.fail){
+    $('#kpis').innerHTML = `<div class="kpi" style="border-color:var(--rd)"><div class="k">無法成行</div><div class="v" style="color:var(--rd);font-size:14px">${p.fail}</div></div>`;
+    $('#timeline').innerHTML = '';
+  } else {
+    renderKPIs(p); renderTimeline(p);
+  }
+  renderSens(); renderTable();
+  $('#cardNote').innerHTML = st.loose
+    ? '目前採<b>放寬認定</b>：只要行程一端是新竹車站，四段都套用新竹市點數。'
+    : '目前採<b>嚴格認定</b>：只有「從新竹站進站」的兩段（新竹→台中、新竹→中壢）套用點數；中壢→新竹與台中→新竹兩段需自付愛心票價。';
+}
+
+/* ---------- 事件 ---------- */
+$('#depSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  st.dep = b.dataset.t; $('#depCustom').value = st.dep;
+  [...$('#depSeg').children].forEach(x=>x.classList.toggle('on', x===b));
+  update();
+});
+$('#depCustom').addEventListener('input', e=>{
+  st.dep = e.target.value || '09:00';
+  [...$('#depSeg').children].forEach(x=>x.classList.toggle('on', x.dataset.t===st.dep));
+  update();
+});
+$('#tx').addEventListener('input', e=>{ st.tx = +e.target.value; update(); });
+$('#eatSeg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  st.eat = +b.dataset.t;
+  [...$('#eatSeg').children].forEach(x=>x.classList.toggle('on', x===b));
+  update();
+});
+$('#buf').addEventListener('change', e=>{ st.buf = +e.target.value; update(); });
+$('#ptsLoose').addEventListener('change', e=>{ st.loose = e.target.checked; update(); });
+$('#fastPick').addEventListener('change', e=>{ st.fast = e.target.checked; update(); });
+$('#showAll').addEventListener('change', e=>{ st.showAll = e.target.checked; renderTable(); });
+
+$('#tabs').innerHTML = LEGS.map(l=>
+  `<button data-k="${l.key}" class="${l.key===st.tab?'on':''}">${l.from} → ${l.to}</button>`).join('');
+$('#tabs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  st.tab = b.dataset.k;
+  [...$('#tabs').children].forEach(x=>x.classList.toggle('on', x===b));
+  renderTable();
+});
+
+document.querySelector('#depSeg button[data-t="09:00"]').classList.add('on');
+update();
+</script>
+</body>
+</html>
